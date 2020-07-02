@@ -20,7 +20,6 @@ J:=Matrix(F,[[0,0,1,0],[0,0,0,1],[1,0,0,0],[0,1,0,0]]);
 assert X*Jmagma*Transpose(X) eq J;
 
 //This function computes the \odot action of Sp_4(F_2) on (the indices of) RegularPairs.
-//This is a right action. The relation with the previous function is that ActsOn2(g,i) = ActsOn(Transpose(g),i).
 ActsOn2:=function(g,i)
 g:=X*Matrix(g)*Transpose(X);
 n:=[g[3,1]*g[1,1]+g[4,1]*g[2,1],g[3,2]*g[1,2]+g[4,2]*g[2,2],g[3,3]*g[1,3]+g[4,3]*g[2,3],g[3,4]*g[1,4]+g[4,4]*g[2,4]];
