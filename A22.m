@@ -20,6 +20,7 @@ J:=Matrix(F,[[0,0,1,0],[0,0,0,1],[1,0,0,0],[0,1,0,0]]);
 assert X*Jmagma*Transpose(X) eq J;
 
 //This function computes the \odot action of Sp_4(F_2) on (the indices of) RegularPairs.
+//This is a right action. The relation with the previous function is that ActsOn2(g,i) = ActsOn(Transpose(g),i).
 ActsOn2:=function(g,i)
 g:=X*Matrix(g)*Transpose(X);
 n:=[g[3,1]*g[1,1]+g[4,1]*g[2,1],g[3,2]*g[1,2]+g[4,2]*g[2,2],g[3,3]*g[1,3]+g[4,3]*g[2,3],g[3,4]*g[1,4]+g[4,4]*g[2,4]];
@@ -322,19 +323,40 @@ assert eps(6,9) eq -1;
 assert eps(7,8) eq 1;
 
 
-//Finally we do the search for Corollary 3. This takes ~ 2 hours.
-//Note that e^(log(2)+log(27))=54 < 60.
-time pts:=PointSearch(A22,60);
-intpts:=[];
-for pt in pts do
-    e:=Eltseq(pt);
-    if not &*e eq 0 then
-        dens:=[Denominator(a) : a in e];
-        e:=[Integers()!(a*LCM(dens)) : a in e];
-        e:=[Integers()!(a/GCD(e)) : a in e];
-        if &and[[d[1] : d in Factorization(a)] in {[], [2]} : a in e] then
-            Append(~intpts,pt);
-        end if;
-    end if;
-end for;
-assert #intpts eq 0;
+//Finally we do the checks for the proof of Corollary 2. 
+
+//We first define Igusa's threefold Y, and the maps between A22 and Y.
+P4<[y]>:=ProjectiveSpace(Rationals(),4);
+phi:=map<A22 -> P4 | [x[6],x[5],x[1],-x[6]-x[7],-x[6]-x[9]]>;
+Y:=Image(phi);
+psi:=map<Y -> A22 | [y[3],y[3]+y[5],y[1]+y[2]+y[3]+y[4]+y[5],y[3]+y[4],y[2],y[1],-y[1]-y[4],-y[2]-y[4],-y[1]-y[5],-y[2]-y[5]]>;
+
+//We are looking for solutions [x[1],...,x[10]] in Z^10 for which there is at most 1 pair (n,p) such that p divides x[n] and p is a prime unequal to 2. By symmetry, we may assume that n=5. Write x[5]=p^m*x. Also by symmetry, we may assume after scaling that x[6] is not divisible by 2, and by possibly multiplying by -1 we get x[6]=1. We also assume that P=[x[1],...,x[10]] does not reduce into a product of elliptic curves mod 2, so that x,x[1],x[7],x[9] in [\pm 1, \pm 2, \pm 2^2,...,\pm 2^6]. 
+
+pows2:={(-1)^a*2^b : a in [0,1], b in [0..6]};
+primes:=[q : q in PrimesUpTo(3*1728) | q gt 2];
+primepowers:={q^n : n in [0..13], q in primes | q^n le 3*1728};
+possols:=[P4![1,q*xx,x1,-1-x7,-1-x9] : q in primepowers, xx in pows2, x1 in pows2, x7 in pows2, x9 in pows2];
+eqn:=DefiningEquations(Y)[1];
+sols:=[a : a in possols | Evaluate(eqn,Eltseq(a)) eq 0];
+sols:=Set(sols);
+solsA22:=[psi(s) : s in sols];
+solsA22:=[A : A in solsA22 | &and[not a eq 0 : a in Eltseq(A)]]; //We remove boundary points
+//We then check condition (iii)
+solsA22:=[A : A in solsA22 | #[p : p in primes | &or[Valuation(a,p) ne 0 : a in Eltseq(A)]] le 1];
+solsA22:=[A : A in solsA22 | &and[Valuation(A[i],p) eq 0 : p in primes, i in [1,2,3,4,6,7,8,9,10]]];  
+assert #solsA22 eq 2; //Two solutions
+assert solsA22[2] in [A22Action(g)(A22!solsA22[1]) : g in G];
+B:=solsA22[2];
+B;
+lambda1sq:=B[1]*B[3]/(B[2]*B[4]);
+lambda2sq:=B[3]*B[9]/(B[2]*B[10]);
+lambda3sq:=B[1]*B[9]/(B[4]*B[10]);
+//These are the squares of lambda1, lambda2, lambda3 defining the hyperelliptic curve corresponding to the point B
+[lambda1sq,lambda2sq,lambda3sq];
+
+//We now consider p=2
+pows2:={(-1)^a*2^b : a in [0,1], b in [0..7]};
+possols:=[P4![1,x5,x1,-1-x7,-1-x9] : x5 in pows2, x1 in pows2, x7 in pows2, x9 in pows2];
+solsA22:=[A : A in solsA22 | &and[&and[Valuation(a,p) eq 0 : p in PrimesUpTo(100) | p gt 2] : a in Eltseq(A)]];
+assert #solsA22 eq 0;
